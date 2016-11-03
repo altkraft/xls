@@ -146,6 +146,21 @@ type NumberCol struct {
 }
 
 func (c *NumberCol) String(wb *WorkBook) []string {
+	idx := int(c.Index)
+	if len(wb.Xfs) > idx {
+		fNo := wb.Xfs[idx].formatNo()
+		if fNo >= 164 { // user defined format
+			if fmt := wb.Formats[fNo]; fmt != nil && strings.Contains(fmt.str, "YY") {
+				t := timeFromExcelTime(c.Float, wb.dateMode == 1)
+				return []string{t.Format(time.RFC3339)} //TODO it should be international
+			}
+			// see http://www.openoffice.org/sc/excelfileformat.pdf
+		} else if 14 <= fNo && fNo <= 17 || fNo == 22 || 27 <= fNo && fNo <= 36 || 50 <= fNo && fNo <= 58 { // jp. date format
+			t := timeFromExcelTime(c.Float, wb.dateMode == 1)
+			return []string{t.Format("2006.01")} //TODO it should be international
+		}
+	}
+
 	return []string{strconv.FormatFloat(c.Float, 'f', -1, 64)}
 }
 
